@@ -14,8 +14,14 @@ function 返回SS接口JSON(body, status = 200) {
 
 function 校验并整理SS节点(ssNodes) {
 	if (!Array.isArray(ssNodes)) return [];
+	const 支持的加密方式 = new Set(['aes-128-gcm', 'aes-192-gcm', 'aes-256-gcm', 'chacha20-ietf-poly1305']);
 	return ssNodes.filter(node => node && node.enabled === true && typeof node.ip === 'string' && node.ip.trim() && Number.isInteger(node.port) && node.port > 0 && node.port <= 65535)
-		.map(node => ({ ip: node.ip.trim(), port: node.port, method: typeof node.method === 'string' ? node.method.trim() : '', password: typeof node.password === 'string' ? node.password : '', username: typeof node.username === 'string' ? node.username : '' }));
+		.map(node => {
+			const method = typeof node.method === 'string' && node.method.trim()
+				? node.method.trim()
+				: (typeof node.cipher === 'string' ? node.cipher.trim() : '');
+			return { name: typeof node.name === 'string' ? node.name : '', ip: node.ip.trim(), port: node.port, method: 支持的加密方式.has(method) ? method : '', password: typeof node.password === 'string' ? node.password : '', username: typeof node.username === 'string' ? node.username : '' };
+		});
 }
 
 function 随机打乱数组(arr) {
@@ -105,8 +111,8 @@ export default {
 			const 需要完整链接 = ['1', 'true', 'yes'].includes((url.searchParams.get('full') || '').toLowerCase());
 			const 返回类型 = (url.searchParams.get('type') || 'ss').toLowerCase();
 			const data = 随机打乱数组([...可用SS节点]).slice(0, count).map(node => {
-				if (!需要完整链接) return { ip: node.ip, port: node.port };
-				const item = { ip: node.ip, port: node.port };
+				if (!需要完整链接) return { name: node.name || undefined, ip: node.ip, port: node.port };
+				const item = { name: node.name || undefined, ip: node.ip, port: node.port };
 				if (返回类型 === 'socks' || 返回类型 === 'socks5') item.socks5 = 生成SOCKS5链接(node);
 				else {
 					const ss = 生成SS链接(node);

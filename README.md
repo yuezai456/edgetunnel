@@ -149,10 +149,11 @@
    - 绑定名需为 `KV`，并写入 key：`SS_NODES`，value 为 JSON 数组，例如：
      ```json
      [
-       { "ip": "47.244.192.12", "port": 16098, "enabled": true },
-       { "ip": "47.244.192.12", "port": 15698, "enabled": true }
+       { "name": "hk-1", "ip": "47.244.192.12", "port": 16098, "cipher": "aes-128-gcm", "password": "your-ss-password", "enabled": true },
+       { "name": "hk-2", "ip": "47.244.192.12", "port": 15698, "cipher": "aes-128-gcm", "password": "your-ss-password", "enabled": true }
      ]
      ```
+   - `cipher` 支持：`aes-128-gcm` / `aes-192-gcm` / `aes-256-gcm` / `chacha20-ietf-poly1305`。
    - Wrangler CLI 示例：
      ```bash
      wrangler kv key put --binding=KV "SS_NODES" '[{"ip":"47.244.192.12","port":16098,"enabled":true},{"ip":"47.244.192.12","port":15698,"enabled":true}]'
