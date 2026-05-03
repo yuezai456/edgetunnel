@@ -216,6 +216,43 @@
 
 ---
 
+## 🧦 SOCKS5 节点 API（Token 保护）
+
+如果你需要的是“可直接用于 `curl --proxy socks5h://...` 的 SOCKS5 节点”，请使用：
+
+`GET /api/socks5?token=xxx&count=1`
+
+1. 在 KV 中新增 `SOCKS5_NODES`（与 `SS_NODES` 分开）：
+   ```json
+   [
+     { "ip": "1.2.3.4", "port": 1080, "enabled": true },
+     { "ip": "1.2.3.5", "port": 1080, "enabled": true, "username": "user", "password": "pass" }
+   ]
+   ```
+
+2. 请求示例：
+   ```bash
+   curl "https://your-domain/api/socks5?token=你的SS_API_TOKEN&count=1"
+   ```
+
+3. 返回示例：
+   ```json
+   {
+     "code": 0,
+     "success": true,
+     "msg": "0",
+     "data": [
+       {
+         "ip": "1.2.3.5",
+         "port": 1080,
+         "socks5": "socks5://user:pass@1.2.3.5:1080"
+       }
+     ]
+   }
+   ```
+
+---
+
 ## 🔧 高级实用技巧
 如需修改 **订阅地址里的TOKEN** 和 **用于节点验证的UUID** ，可通过修改变量
 1. 修改`ADMIN`或`KEY`变量的值，可以随机修改 **订阅地址里的TOKEN** 和 **用于节点验证的UUID**
