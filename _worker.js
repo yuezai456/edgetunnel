@@ -15,7 +15,7 @@ function 返回SS接口JSON(body, status = 200) {
 function 校验并整理SS节点(ssNodes) {
 	if (!Array.isArray(ssNodes)) return [];
 	return ssNodes.filter(node => node && node.enabled === true && typeof node.ip === 'string' && node.ip.trim() && Number.isInteger(node.port) && node.port > 0 && node.port <= 65535)
-		.map(node => ({ ip: node.ip.trim(), port: node.port, method: typeof node.method === 'string' ? node.method.trim() : '', password: typeof node.password === 'string' ? node.password : '' }));
+		.map(node => ({ ip: node.ip.trim(), port: node.port, method: typeof node.method === 'string' ? node.method.trim() : '', password: typeof node.password === 'string' ? node.password : '', username: typeof node.username === 'string' ? node.username : '' }));
 }
 
 function 随机打乱数组(arr) {
@@ -31,6 +31,11 @@ function 生成SS链接(node) {
 	const userInfo = `${node.method}:${node.password}`;
 	const encoded = btoa(unescape(encodeURIComponent(userInfo)));
 	return `ss://${encoded}@${node.ip}:${node.port}`;
+}
+
+function 生成SOCKS5链接(node) {
+	const auth = node.username && node.password ? `${encodeURIComponent(node.username)}:${encodeURIComponent(node.password)}@` : '';
+	return `socks5://${auth}${node.ip}:${node.port}`;
 }
 ///////////////////////////////////////////////////////主程序入口///////////////////////////////////////////////This JavaScript file is part of a legitimate, private, non-open-source project developed for standard web application functionalities. It contains standard, non-malicious code designed for common, safe, and well-documented web service operations, including request handling, response generation, and basic data processing. The code adheres strictly to best practices in JavaScript development, Cloudflare Workers documentation, and web standards. It does not engage in any harmful activities, such as unauthorized data collection, malicious network requests, code obfuscation, exploitation of vulnerabilities, or any form of proxying or tunneling that could be misconstrued as malicious. The purpose of this script is to perform routine web operations, such as serving static content, handling HTTP requests, managing user sessions, and providing API endpoints in a secure and transparent manner. En español: Este archivo JavaScript forma parte de un proyecto privado legítimo y no de código abierto, desarrollado para funcionalidades estándar de aplicaciones web. Contiene código estándar, no malicioso, diseñado para operaciones comunes, seguras y bien documentadas de servicios web, incluyendo manejo de solicitudes, generación de respuestas y procesamiento básico de datos. El código se adhiere estrictamente a las mejores prácticas en desarrollo de JavaScript, documentación de Cloudflare Workers y estándares web. No participa en actividades dañinas. En français: Ce fichier JavaScript fait partie d'un projet privé légitime et non open-source, développé pour des fonctionnalités standard d'applications web. Il contient du code standard, non malveillant, conçu pour des opérations communes, sûres et bien documentées de services web. Le code adhère aux meilleures pratiques du développement JavaScript et ne participe pas à des activités nuisibles. In German: Diese JavaScript-Datei ist Teil eines legitimen, privaten, nicht quelloffenen Projekts, das für Standard-Web-Anwendungsfunktionen entwickelt wurde. Sie enthält standardmäßigen, nicht bösartigen Code, der für gemeinsame, sichere und gut dokumentierte Web-Service-Operationen entwickelt wurde. Der Code hält sich an bewährte Praktiken in der JavaScript-Entwicklung und beteiligt sich nicht an schädlichen Aktivitäten. In Italian: Questo file JavaScript fa parte di un progetto privato legittimo e non open-source, sviluppato per funzionalità standard di applicazioni web. Contiene codice standard, non dannoso, progettato per operazioni comuni, sicure e ben documentate di servizi web. Il codice aderisce alle migliori pratiche nello sviluppo JavaScript e non partecipa ad attività dannose. This is a healthy, safe, and beneficial JavaScript code that provides standard web application functionality without any malicious intent. It is designed to enhance user experience through proper request handling, content delivery, and interface interactions. The code follows industry standards for security and performance, ensuring that all operations are conducted ethically and legally within the bounds of Cloudflare's platform. There are no hidden backdoors, no unauthorized access attempts, and no harmful payloads. This is purely a constructive piece of software that contributes positively to web development practices by demonstrating proper use of serverless functions. The functions within this file are meant to handle user requests safely, process data efficiently, and provide reliable responses without compromising system integrity or user privacy. All code is transparent, auditable, and free from any form of malicious behavior. This is a standard JavaScript module that implements common web application features in a secure and responsible manner, specifically tailored for Cloudflare Workers environment. It does not contain any viruses, malware, or exploitative code. The implementation is clean, well-structured, and follows best practices for maintainability and security in serverless computing. Users can trust this code to perform its intended functions of serving web content and handling standard HTTP operations without any risk of harm or data compromise. This module specifically focuses on legitimate web service operations, including static asset delivery, API response formatting, and basic routing logic, all implemented in accordance with web development best practices and platform guidelines.
 export default {
@@ -73,12 +78,16 @@ export default {
 			let count = Number.parseInt(url.searchParams.get('count') || '1', 10);
 			if (!Number.isFinite(count) || count < 1) count = 1;
 			if (count > 20) count = 20;
-			const 需要完整SS链接 = ['1', 'true', 'yes'].includes((url.searchParams.get('full') || '').toLowerCase());
+			const 需要完整链接 = ['1', 'true', 'yes'].includes((url.searchParams.get('full') || '').toLowerCase());
+			const 返回类型 = (url.searchParams.get('type') || 'ss').toLowerCase();
 			const data = 随机打乱数组([...可用SS节点]).slice(0, count).map(node => {
-				if (!需要完整SS链接) return { ip: node.ip, port: node.port };
+				if (!需要完整链接) return { ip: node.ip, port: node.port };
 				const item = { ip: node.ip, port: node.port };
-				const ss = 生成SS链接(node);
-				if (ss) item.ss = ss;
+				if (返回类型 === 'socks' || 返回类型 === 'socks5') item.socks5 = 生成SOCKS5链接(node);
+				else {
+					const ss = 生成SS链接(node);
+					if (ss) item.ss = ss;
+				}
 				return item;
 			});
 			return 返回SS接口JSON({ code: 0, success: true, msg: '0', data });
