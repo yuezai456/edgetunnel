@@ -130,6 +130,130 @@
 
 ---
 
+## 🔐 SS 节点 API（Token 保护）
+
+用于按需随机返回 KV 中的可用 SS 节点：
+
+`GET /api/ss?token=xxx&count=2`
+
+可选参数：`full=1`，当 KV 节点里包含 `method` 和 `password` 时，返回完整代理链接。默认 `type=ss` 返回 `ss://`（字段名 `ss`），`type=socks5` 返回 `socks5://`（字段名 `socks5`）。
+
+1. 创建 Secret `SS_API_TOKEN`
+   - Workers：进入 Worker -> `设置` -> `变量和机密` -> 添加机密，名称填 `SS_API_TOKEN`，值填你的 token。
+   - Wrangler CLI 示例：
+     ```bash
+     wrangler secret put SS_API_TOKEN
+     ```
+
+2. 在 KV 中写入 `SS_NODES`
+   - 绑定名需为 `KV`，并写入 key：`SS_NODES`，value 为 JSON 数组，例如：
+     ```json
+     [
+       { "name": "hk-1", "ip": "47.244.192.12", "port": 16098, "cipher": "aes-128-gcm", "password": "your-ss-password", "enabled": true },
+       { "name": "hk-2", "ip": "47.244.192.12", "port": 15698, "cipher": "aes-128-gcm", "password": "your-ss-password", "enabled": true }
+     ]
+     ```
+   - `cipher` 支持：`aes-128-gcm` / `aes-192-gcm` / `aes-256-gcm` / `chacha20-ietf-poly1305`。
+   - Wrangler CLI 示例：
+     ```bash
+     wrangler kv key put --binding=KV "SS_NODES" '[{"ip":"47.244.192.12","port":16098,"enabled":true},{"ip":"47.244.192.12","port":15698,"enabled":true}]'
+     ```
+
+3. 请求示例
+   ```bash
+   curl "https://your-domain/api/ss?token=你的SS_API_TOKEN&count=2"
+   ```
+
+4. 正常返回示例
+   ```json
+   {
+     "code": 0,
+     "success": true,
+     "msg": "0",
+     "data": [
+       { "ip": "47.244.192.12", "port": 16098 },
+       { "ip": "47.244.192.12", "port": 15698 }
+     ]
+   }
+   ```
+
+5. 返回完整 SS 链接示例（可选）
+   ```bash
+   curl "https://your-domain/api/ss?token=你的SS_API_TOKEN&count=1&full=1"
+   ```
+   ```json
+   {
+     "code": 0,
+     "success": true,
+     "msg": "0",
+     "data": [
+       {
+         "ip": "47.244.192.12",
+         "port": 16098,
+         "ss": "ss://YWVzLTEyOC1nY206eW91cl9wYXNzd29yZA==@47.244.192.12:16098"
+       }
+     ]
+   }
+   ```
+
+6. 返回完整 SOCKS5 链接示例（可选）
+   ```bash
+   curl "https://your-domain/api/ss?token=你的SS_API_TOKEN&count=1&full=1&type=socks5"
+   ```
+   ```json
+   {
+     "code": 0,
+     "success": true,
+     "msg": "0",
+     "data": [
+       {
+         "ip": "47.244.192.12",
+         "port": 1080,
+         "socks5": "socks5://47.244.192.12:1080"
+       }
+     ]
+   }
+   ```
+
+---
+
+## 🧦 SOCKS5 节点 API（Token 保护）
+
+如果你需要的是“可直接用于 `curl --proxy socks5h://...` 的 SOCKS5 节点”，请使用：
+
+`GET /api/socks5?token=xxx&count=1`
+
+1. 在 KV 中新增 `SOCKS5_NODES`（与 `SS_NODES` 分开）：
+   ```json
+   [
+     { "ip": "1.2.3.4", "port": 1080, "enabled": true },
+     { "ip": "1.2.3.5", "port": 1080, "enabled": true, "username": "user", "password": "pass" }
+   ]
+   ```
+
+2. 请求示例：
+   ```bash
+   curl "https://your-domain/api/socks5?token=你的SS_API_TOKEN&count=1"
+   ```
+
+3. 返回示例：
+   ```json
+   {
+     "code": 0,
+     "success": true,
+     "msg": "0",
+     "data": [
+       {
+         "ip": "1.2.3.5",
+         "port": 1080,
+         "socks5": "socks5://user:pass@1.2.3.5:1080"
+       }
+     ]
+   }
+   ```
+
+---
+
 ## 🔧 高级实用技巧
 如需修改 **订阅地址里的TOKEN** 和 **用于节点验证的UUID** ，可通过修改变量
 1. 修改`ADMIN`或`KEY`变量的值，可以随机修改 **订阅地址里的TOKEN** 和 **用于节点验证的UUID**
