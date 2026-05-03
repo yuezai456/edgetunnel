@@ -130,6 +130,52 @@
 
 ---
 
+## 🔐 SS 节点 API（Token 保护）
+
+用于按需随机返回 KV 中的可用 SS 节点：
+
+`GET /api/ss?token=xxx&count=2`
+
+1. 创建 Secret `SS_API_TOKEN`
+   - Workers：进入 Worker -> `设置` -> `变量和机密` -> 添加机密，名称填 `SS_API_TOKEN`，值填你的 token。
+   - Wrangler CLI 示例：
+     ```bash
+     wrangler secret put SS_API_TOKEN
+     ```
+
+2. 在 KV 中写入 `SS_NODES`
+   - 绑定名需为 `KV`，并写入 key：`SS_NODES`，value 为 JSON 数组，例如：
+     ```json
+     [
+       { "ip": "47.244.192.12", "port": 16098, "enabled": true },
+       { "ip": "47.244.192.12", "port": 15698, "enabled": true }
+     ]
+     ```
+   - Wrangler CLI 示例：
+     ```bash
+     wrangler kv key put --binding=KV "SS_NODES" '[{"ip":"47.244.192.12","port":16098,"enabled":true},{"ip":"47.244.192.12","port":15698,"enabled":true}]'
+     ```
+
+3. 请求示例
+   ```bash
+   curl "https://your-domain/api/ss?token=你的SS_API_TOKEN&count=2"
+   ```
+
+4. 正常返回示例
+   ```json
+   {
+     "code": 0,
+     "success": true,
+     "msg": "0",
+     "data": [
+       { "ip": "47.244.192.12", "port": 16098 },
+       { "ip": "47.244.192.12", "port": 15698 }
+     ]
+   }
+   ```
+
+---
+
 ## 🔧 高级实用技巧
 如需修改 **订阅地址里的TOKEN** 和 **用于节点验证的UUID** ，可通过修改变量
 1. 修改`ADMIN`或`KEY`变量的值，可以随机修改 **订阅地址里的TOKEN** 和 **用于节点验证的UUID**
