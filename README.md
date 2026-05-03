@@ -136,6 +136,8 @@
 
 `GET /api/ss?token=xxx&count=2`
 
+可选参数：`full=1`，当 KV 节点里包含 `method` 和 `password` 时，返回 `ss://` 链接（字段名 `ss`）。
+
 1. 创建 Secret `SS_API_TOKEN`
    - Workers：进入 Worker -> `设置` -> `变量和机密` -> 添加机密，名称填 `SS_API_TOKEN`，值填你的 token。
    - Wrangler CLI 示例：
@@ -170,6 +172,25 @@
      "data": [
        { "ip": "47.244.192.12", "port": 16098 },
        { "ip": "47.244.192.12", "port": 15698 }
+     ]
+   }
+   ```
+
+5. 返回完整 SS 链接示例（可选）
+   ```bash
+   curl "https://your-domain/api/ss?token=你的SS_API_TOKEN&count=1&full=1"
+   ```
+   ```json
+   {
+     "code": 0,
+     "success": true,
+     "msg": "0",
+     "data": [
+       {
+         "ip": "47.244.192.12",
+         "port": 16098,
+         "ss": "ss://YWVzLTEyOC1nY206eW91cl9wYXNzd29yZA==@47.244.192.12:16098"
+       }
      ]
    }
    ```
